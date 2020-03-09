@@ -21,6 +21,25 @@ services:
       - "15672"
     restart: always
 
+  gateway:
+    image: gateway
+    build: 
+      context: ./gateway
+      dockerfile: Dockerfile-dev
+    container_name: gateway
+    volumes:
+      - /tmp/gateway/npm-cache:/root/.npm:z
+      - ./gateway/src:/usr/src/app/src:z
+    ports:
+      - "4001:80"
+    environment:
+      - PORT=80
+      - RABBIT=amqp://guest:guest@rabbit:5672
+      - NODE_ENV=development
+    depends_on:
+      - rabbit
+    restart: "no"
+
   video-streaming:
     image: video-streaming
     build: 
