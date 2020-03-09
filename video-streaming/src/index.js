@@ -1,12 +1,51 @@
 const express = require("express");
 const fs = require("fs");
+const amqp = require('amqplib');
+
+if (!process.env.RABBIT) {
+    throw new Error("Please specify the name of the RabbitMQ host using environment variable RABBIT");
+}
+
+const RABBIT = process.env.RABBIT;
+
+//
+// Connect to the RabbitMQ server.
+//
+function connectRabbit() {
+
+    console.log(`Connecting to RabbitMQ server at ${RABBIT}.`);
+
+    return amqp.connect(RABBIT) // Connect to the RabbitMQ server.
+        .then(connection => {
+            console.log("Connected to RabbitMQ.");
+
+            return connection.createChannel() // Create a RabbitMQ messaging channel.
+                .then(messageChannel => {
+                    return messageChannel.assertExchange("viewed", "fanout") // Assert that we have a "viewed" exchange.
+                        .then(() => {
+                            return messageChannel;
+                        });
+                });
+        });
+}
+
+//
+// Send the "viewed" to the history microservice.
+//
+function sendViewedMessage(messageChannel, videoPath) {
+    console.log(`Publishing message on "viewed" exchange.`);
+        
+    const msg = { videoPath: videoPath };
+    const jsonMsg = JSON.stringify(msg);
+    messageChannel.publish("viewed", "", Buffer.from(jsonMsg)); // Publish message to the "viewed" exchange.
+}
 
 //
 // Setup event handlers.
 //
-function setupHandlers(app) {
+function setupHandlers(app, messageChannel) {
     app.get("/video", (req, res) => { // Route for streaming video.
-        
+
         const videoPath = "./videos/SampleVideo_1280x720_1mb.mp4";
         fs.stat(videoPath, (err, stats) => {
             if (err) {
@@ -21,6 +60,8 @@ function setupHandlers(app) {
             });
     
             fs.createReadStream(videoPath).pipe(res);
+
+            sendViewedMessage(messageChannel, videoPath); // Send message to "history" microservice that this video has been "viewed".
         });
     });
 }
@@ -28,14 +69,14 @@ function setupHandlers(app) {
 //
 // Start the HTTP server.
 //
-function startHttpServer() {
-    return new Promise((resolve, reject) => { // Wrap in a promise so we can be notified when the server has started.
+function startHttpServer(messageChannel) {
+    return new Promise(resolve => { // Wrap in a promise so we can be notified when the server has started.
         const app = express();
-        setupHandlers(app);
-        
+        setupHandlers(app, messageChannel);
+
         const port = process.env.PORT && parseInt(process.env.PORT) || 3000;
         app.listen(port, () => {
-            resolve();
+            resolve(); // HTTP server is listening, resolve the promise.
         });
     });
 }
@@ -44,7 +85,10 @@ function startHttpServer() {
 // Application entry point.
 //
 function main() {
-    return startHttpServer();
+    return connectRabbit()                          // Connect to RabbitMQ...
+        .then(messageChannel => {                   // then...
+            return startHttpServer(messageChannel); // start the HTTP server.
+        });
 }
 
 main()
