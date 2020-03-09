@@ -57,6 +57,8 @@ services:
       - DBHOST=mongodb://db:27017
       - DBNAME=videos
       - NODE_ENV=development
+      - VIDEO_STORAGE_HOST=video-storage
+      - VIDEO_STORAGE_PORT=3000
     depends_on:
       - rabbit
     restart: "no"
@@ -103,4 +105,17 @@ services:
     depends_on:
       - db
       - rabbit
+    restart: "no"
+
+  azure-storage:
+    image: azure-storage
+    build: 
+      context: ./azure-storage
+      dockerfile: Dockerfile
+    container_name: video-storage
+    ports:
+     - "4004:3000"
+    environment:
+      - IMAGE_STORAGE_ACCOUNT_NAME=bootstrapmicroservice
+      - IMAGE_STORAGE_ACCESS_KEY=EAjM1FvpfEG1kR8H+zkKJO/T1TjS++GYysJICJVS0f1UncMttRj0h8peq/5ciJWI+PwjkUyHL+cEv6ahtnsWWA==
     restart: "no"
