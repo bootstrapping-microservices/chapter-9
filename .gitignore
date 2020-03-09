@@ -1,0 +1,4 @@
+.vagrant/
+video-streaming/node_modules/
+todo.txt
+ubuntu-xenial-16.04-cloudimg-console.log
