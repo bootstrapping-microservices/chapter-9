@@ -30,12 +30,13 @@ services:
     volumes:
       - /tmp/video-streaming/npm-cache:/root/.npm:z
       - ./video-streaming/src:/usr/src/app/src:z
-      - ./video-streaming/videos:/usr/src/app/videos:z
     ports:
       - "4001:80"
     environment:
       - PORT=80
       - RABBIT=amqp://guest:guest@rabbit:5672
+      - DBHOST=mongodb://db:27017
+      - DBNAME=videos
       - NODE_ENV=development
     depends_on:
       - rabbit
