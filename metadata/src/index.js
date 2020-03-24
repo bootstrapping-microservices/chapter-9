@@ -49,32 +49,72 @@ function connectRabbit() {
 //
 function setupHandlers(app, db, messageChannel) {
 
-    const historyCollection = db.collection("videos");
+    const videosCollection = db.collection("videos");
 
-    // ... YOU CAN PUT HTTP ROUTES AND OTHER MESSAGE HANDLERS HERE ...
+    //
+    // HTTP GET API to retrieve list of videos from the database.
+    //
+    app.get("/videos", (req, res) => {
+        videosCollection.find() // Retreive video list from database.
+            .toArray() // In a real application this should be paginated.
+            .then(videos => {
+                res.json({ videos });
+            })
+            .catch(err => {
+                console.error("Failed to get videos collection.");
+                console.error(err);
+                res.sendStatus(500);
+            });
+    });
 
-    function consumeViewedMessage(msg) { // Handler for coming messages.
+    //
+    // HTTP GET API to retreive details for a particular video.
+    //
+    app.get("/video", (req, res) => {
+        const videoId = new mongodb.ObjectID(req.query.id);
+        videosCollection.findOne({ _id: videoId }) // Retreive details of video from database.
+            .then(video => {
+                if (!video) {
+                    res.sendStatus(404); // Video with the requested ID doesn't exist!
+                }
+                else {
+                    res.json({ video });
+                }
+            })
+            .catch(err => {
+                console.error(`Failed to get video ${videoId}.`);
+                console.error(err);
+                res.sendStatus(500);
+            });
+    });
+    
+    function consumeVideoUploadedMessage(msg) { // Handler for coming messages.
+        console.log("Received a 'viewed-uploaded' message");
+
         const parsedMsg = JSON.parse(msg.content.toString()); // Parse the JSON message.
-        console.log("Received a 'viewed' message:");
-        console.log(JSON.stringify(parsedMsg, null, 4)); // JUST PRINTING THE RECEIVED MESSAGE.
 
-        // ... ADD YOUR CODE HERE TO PROCESS THE MESSAGE ...
-
-        console.log("Acknowledging message was handled.");
-
-        messageChannel.ack(msg); // If there is no error, acknowledge the message.
+        const videoMetadata = {
+            _id: new mongodb.ObjectID(parsedMsg.video.id),
+            name: parsedMsg.video.name,
+        };
+        
+        return videosCollection.insertOne(videoMetadata) // Record the metadata for the video.
+            .then(() => {
+                console.log("Acknowledging message was handled.");                
+                messageChannel.ack(msg); // If there is no error, acknowledge the message.
+            });
     };
 
-    return messageChannel.assertExchange("viewed", "fanout") // Assert that we have a "viewed" exchange.
+    return messageChannel.assertExchange("video-uploaded", "fanout") // Assert that we have a "video-uploaded" exchange.
         .then(() => {
             return messageChannel.assertQueue("", {}); // Create an anonyous queue.
         })
         .then(response => {
             const queueName = response.queue;
-            console.log(`Created queue ${queueName}, binding it to "viewed" exchange.`);
-            return messageChannel.bindQueue(queueName, "viewed", "") // Bind the queue to the exchange.
+            console.log(`Created queue ${queueName}, binding it to "video-uploaded" exchange.`);
+            return messageChannel.bindQueue(queueName, "video-uploaded", "") // Bind the queue to the exchange.
                 .then(() => {
-                    return messageChannel.consume(queueName, consumeViewedMessage); // Start receiving messages from the anonymous queue.
+                    return messageChannel.consume(queueName, consumeVideoUploadedMessage); // Start receiving messages from the anonymous queue.
                 });
         });
 }

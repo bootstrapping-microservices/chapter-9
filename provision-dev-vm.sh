@@ -45,6 +45,13 @@ sudo apt-get -yq install docker-ce
 docker --version
 
 #
+# Install Docker-Compose.
+# https://docs.docker.com/compose/install/
+#
+sudo curl --silent -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+#
 # User setup for docker.
 #
 sudo groupadd docker

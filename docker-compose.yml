@@ -30,8 +30,9 @@ services:
     volumes:
       - /tmp/gateway/npm-cache:/root/.npm:z
       - ./gateway/src:/usr/src/app/src:z
+      - ./gateway/public:/usr/src/app/public:z
     ports:
-      - "4001:80"
+      - "4000:80"
     environment:
       - PORT=80
       - RABBIT=amqp://guest:guest@rabbit:5672
@@ -60,6 +61,7 @@ services:
       - VIDEO_STORAGE_HOST=video-storage
       - VIDEO_STORAGE_PORT=3000
     depends_on:
+      - db
       - rabbit
     restart: "no"
 
@@ -85,37 +87,61 @@ services:
       - rabbit
     restart: "no"
 
-  recommendations:
-    image: recommendations
+  video-upload:
+    image: video-upload
     build: 
-      context: ./recommendations
+      context: ./video-upload
       dockerfile: Dockerfile-dev
-    container_name: recommendations
+    container_name: video-upload
     volumes:
-      - /tmp/recommendations/npm-cache:/root/.npm:z
-      - ./recommendations/src:/usr/src/app/src:z
+      - /tmp/video-upload/npm-cache:/root/.npm:z
+      - ./video-upload/src:/usr/src/app/src:z
+      - ./video-upload/uploads:/usr/src/app/uploads:z
     ports:
-     - "4003:80"
+     - "4004:80"
+    environment:
+      - PORT=80
+      - RABBIT=amqp://guest:guest@rabbit:5672
+      - NODE_ENV=development
+    depends_on:
+      - rabbit
+    restart: "no"
+
+  video-storage:
+    image: azure-storage
+    build: 
+      context: ./azure-storage
+      dockerfile: Dockerfile-dev
+    container_name: video-storage
+    volumes:
+      - /tmp/azure-storage/npm-cache:/root/.npm:z
+      - ./azure-storage/src:/usr/src/app/src:z
+    ports:
+     - "4005:80"
+    environment:
+      - PORT=80
+      - STORAGE_ACCOUNT_NAME=bootstrapmicroservice
+      - STORAGE_ACCESS_KEY=EAjM1FvpfEG1kR8H+zkKJO/T1TjS++GYysJICJVS0f1UncMttRj0h8peq/5ciJWI+PwjkUyHL+cEv6ahtnsWWA==
+    restart: "no"
+
+  metadata:
+    image: metadata
+    build: 
+      context: ./metadata
+      dockerfile: Dockerfile-dev
+    container_name: metadata
+    volumes:
+      - /tmp/metadata/npm-cache:/root/.npm:z
+      - ./metadata/src:/usr/src/app/src:z
+    ports:
+     - "4006:80"
     environment:
       - PORT=80
       - RABBIT=amqp://guest:guest@rabbit:5672
       - DBHOST=mongodb://db:27017
-      - DBNAME=recommendations
+      - DBNAME=metadata
       - NODE_ENV=development
     depends_on:
       - db
       - rabbit
-    restart: "no"
-
-  azure-storage:
-    image: azure-storage
-    build: 
-      context: ./azure-storage
-      dockerfile: Dockerfile
-    container_name: video-storage
-    ports:
-     - "4004:3000"
-    environment:
-      - IMAGE_STORAGE_ACCOUNT_NAME=bootstrapmicroservice
-      - IMAGE_STORAGE_ACCESS_KEY=EAjM1FvpfEG1kR8H+zkKJO/T1TjS++GYysJICJVS0f1UncMttRj0h8peq/5ciJWI+PwjkUyHL+cEv6ahtnsWWA==
     restart: "no"

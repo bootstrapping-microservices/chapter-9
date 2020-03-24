@@ -1,0 +1,39 @@
+/*
+Some global styles for our example web page.
+*/
+
+h1 {
+    font-size: 2em;
+}
+
+a:link {
+    color: #007db5;
+    text-decoration: none;
+}
+
+a:visited {
+    color: green;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #ff8a00;
+    text-decoration: underline;
+    text-decoration-color: #ff8a00;
+}
+
+a:active {
+    color: #e52e71;
+    text-decoration: underline;
+    text-decoration-color: #e52e71;
+}
+
+.nav a:link {
+    color: black;
+    text-decoration: none;
+}
+
+.nav a:visited {
+    color: black;
+    text-decoration: none;
+}

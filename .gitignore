@@ -6,3 +6,9 @@ history/node_modules/
 recommendations/node_modules/
 gateway/node_modules/
 azure-storage/node_modules/
+scripts/.terraform/
+run.log
+video-upload/node_modules/
+video-upload/uploads/
+logs/dev-system-up.log
+metadata/node_modules/

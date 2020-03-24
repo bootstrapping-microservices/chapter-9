@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Flixtube: History</title>
+
+        <link rel="stylesheet" href="css/tailwind.min.css">
+        <link rel="stylesheet" href="css/app.css">
+    </head>
+    <body>
+        <div class="flex flex-col">
+            <div class="border-b-2 bg-gray-100">
+                <div class="nav flex flex-row items-center mt-1 p-2">
+                    <div class="text-xl font-bold">
+                        Flixtube
+                    </div>
+                    <div class="ml-16">
+                        <a href="/">Videos</a>
+                    </div>
+                    <div class="ml-4">
+                        <a href="/upload">Upload</a>
+                    </div>
+                    <div class="ml-4 border-b-2 border-blue-600">
+                        <a href="/history">History</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="m-4">
+	            <h1>Viewing history</h1>
+                <div class="m-4">
+                    <table>
+                        <tr>
+                            <th class="border-2 p-1 pl-2 pr-2">Video id</th>
+                            <th class="border-2 p-1 pl-2 pr-2">Date watched</th>
+                        </tr>
+                        {{#each videos}}
+                            <tr class="mt-1">
+                                <td class="border-2 p-1 pl-2 pr-2">
+                                    <a href="/video?id={{this.videoId}}">{{this.videoId}}</a> 
+                                </td>
+                                <td class="border-2 p-1 pl-2 pr-2">
+                                    {{this.watched}}
+                                </td>
+                            </tr>
+                        {{/each}}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

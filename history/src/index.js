@@ -51,14 +51,28 @@ function setupHandlers(app, db, messageChannel) {
 
     const videosCollection = db.collection("videos");
 
-    // ... YOU CAN PUT HTTP ROUTES AND OTHER MESSAGE HANDLERS HERE ...
+    //
+    // HTTP GET API to retrieve video viewing history.
+    //
+    app.get("/videos", (req, res) => {
+        videosCollection.find() // Retreive video list from database.
+            .toArray() // In a real application this should be paginated.
+            .then(videos => {
+                res.json({ videos });
+            })
+            .catch(err => {
+                console.error("Failed to get videos collection.");
+                console.error(err);
+                res.sendStatus(500);
+            });
+    });
 
     function consumeViewedMessage(msg) { // Handler for coming messages.
         console.log("Received a 'viewed' message");
 
         const parsedMsg = JSON.parse(msg.content.toString()); // Parse the JSON message.
         
-        return videosCollection.insertOne({ videoPath: parsedMsg.videoPath }) // Record the "view" in the database.
+        return videosCollection.insertOne({ videoId: parsedMsg.video.id, watched: new Date() }) // Record the "view" in the database.
             .then(() => {
                 console.log("Acknowledging message was handled.");
                 
