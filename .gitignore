@@ -12,3 +12,4 @@ video-upload/node_modules/
 video-upload/uploads/
 logs/dev-system-up.log
 metadata/node_modules/
+mock-storage/node_modules/

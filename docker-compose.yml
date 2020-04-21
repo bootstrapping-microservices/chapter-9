@@ -107,21 +107,36 @@ services:
       - rabbit
     restart: "no"
 
+  # video-storage:
+  #   image: azure-storage
+  #   build: 
+  #     context: ./azure-storage
+  #     dockerfile: Dockerfile-dev
+  #   container_name: video-storage
+  #   volumes:
+  #     - /tmp/azure-storage/npm-cache:/root/.npm:z
+  #     - ./azure-storage/src:/usr/src/app/src:z
+  #   ports:
+  #    - "4005:80"
+  #   environment:
+  #     - PORT=80
+  #     - STORAGE_ACCOUNT_NAME=bootstrapmicroservice
+  #     - STORAGE_ACCESS_KEY=EAjM1FvpfEG1kR8H+zkKJO/T1TjS++GYysJICJVS0f1UncMttRj0h8peq/5ciJWI+PwjkUyHL+cEv6ahtnsWWA==
+  #   restart: "no"
+
   video-storage:
-    image: azure-storage
+    image: mock-storage
     build: 
-      context: ./azure-storage
+      context: ./mock-storage
       dockerfile: Dockerfile-dev
     container_name: video-storage
     volumes:
-      - /tmp/azure-storage/npm-cache:/root/.npm:z
-      - ./azure-storage/src:/usr/src/app/src:z
+      - /tmp/mock-storage/npm-cache:/root/.npm:z
+      - ./mock-storage/src:/usr/src/app/src:z
     ports:
      - "4005:80"
     environment:
       - PORT=80
-      - STORAGE_ACCOUNT_NAME=bootstrapmicroservice
-      - STORAGE_ACCESS_KEY=EAjM1FvpfEG1kR8H+zkKJO/T1TjS++GYysJICJVS0f1UncMttRj0h8peq/5ciJWI+PwjkUyHL+cEv6ahtnsWWA==
     restart: "no"
 
   metadata:
