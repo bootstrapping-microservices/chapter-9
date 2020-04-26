@@ -1,0 +1,24 @@
+{
+  "name": "chapter-9",
+  "version": "1.0.0",
+  "description": "Code and examples for Chapter 9 of [Bootstrapping Microservices](http://bit.ly/2o0aDsP).",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "cypress": "^4.4.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bootstrapping-microservices/chapter-9.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bootstrapping-microservices/chapter-9/issues"
+  },
+  "homepage": "https://github.com/bootstrapping-microservices/chapter-9#readme"
+}
