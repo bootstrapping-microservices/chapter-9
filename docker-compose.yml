@@ -21,6 +21,25 @@ services:
       - "15672"
     restart: always
 
+  # Service for loading database fixtures.
+  db-fixture-rest-api:
+    image: db-fixture-rest-api
+    build: 
+      context: ./db-fixture-rest-api
+      dockerfile: Dockerfile
+    container_name: db-fixture-rest-api
+    ports:
+     - "9000:80"
+    environment:
+     - PORT=80
+     - DBHOST=mongodb://db:27017
+     - FIXTURES_DIR=fixtures
+    volumes:
+     - ./fixtures:/usr/src/app/fixtures:z
+    depends_on:
+      - db
+    restart: always
+
   gateway:
     image: gateway
     build: 

@@ -14,3 +14,6 @@ logs/dev-system-up.log
 metadata/node_modules/
 mock-storage/node_modules/
 node_modules/
+cypress/videos/
+cypress/integration/examples/
+cypress/fixtures/example.json
