@@ -9,6 +9,7 @@ const express = require('express');
 const Fixtures = require('node-mongodb-fixtures');
 const path = require('path');
 const{ MongoClient } = require('mongodb');
+const globby = require("globby");
 
 const app = express();
 
@@ -46,6 +47,7 @@ function startServer() {
             console.log(`HTTP GET http://localhost:${port}/drop-collection?db=<db-name>&col=<collection-name>`);
             console.log(`HTTP GET http://localhost:${port}/drop-database?db=<db-name>`);
             console.log(`HTTP GET http://localhost:${port}/get-collection?db=<db-name>&col=<collection-name>`);
+			resolve(server);
         });
     });
 }
@@ -219,6 +221,22 @@ async function main() {
                 console.error(msg);
                 console.error(err && err.stack || err);
                 res.status(400).send(msg);
+            });
+    });
+    
+    app.get("/get-fixtures", (req, res) => {
+
+        globby([fixturesDirectory + "/**/*.js", fixturesDirectory + "/**/*.json"])
+            .then(fixtureFilePaths => {
+
+                const fixtureNames = fixtureFilePaths.map(fixtureFilePath => path.basename(path.dirname(fixtureFilePath)));
+                res.json(fixtureNames);
+            })
+            .catch(err => {
+                const msg = "Failed to list fixtures in directory" + fixturesDirectory;
+                console.error(msg);
+                console.error(err && err.stack || err);
+                res.status(500).send(msg);
             });
     });
 
