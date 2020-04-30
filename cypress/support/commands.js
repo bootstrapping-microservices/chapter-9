@@ -24,40 +24,43 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
-const baseUrl = "http://localhost:9000"; //TODO: can this go in config?
-
 Cypress.Commands.add('loadFixture',  (databaseName, fixtureName) => {
     cy.unloadFixture(databaseName, fixtureName);
-    
-    cy.request("GET", baseUrl + "/load-fixture?db=" + databaseName + "&fix=" + fixtureName)
+
+    const dbFixturesUrl = Cypress.config("dbFixturesUrl");    
+    cy.request("GET", dbFixturesUrl + "/load-fixture?db=" + databaseName + "&fix=" + fixtureName)
         .then(response => {
             expect(response.status).to.eql(200);
         });
 });
 
 Cypress.Commands.add('unloadFixture',  (databaseName, fixtureName) => {
-    cy.request("GET", baseUrl + "/unload-fixture?db=" + databaseName + "&fix=" + fixtureName)
+    const dbFixturesUrl = Cypress.config("dbFixturesUrl");    
+    cy.request("GET", dbFixturesUrl + "/unload-fixture?db=" + databaseName + "&fix=" + fixtureName)
         .then(response => {
             expect(response.status).to.eql(200);
         });
 });
 
 Cypress.Commands.add('dropDatabase', databaseName => {
-    cy.request("GET", baseUrl + "/drop-database?db=" + databaseName)
+    const dbFixturesUrl = Cypress.config("dbFixturesUrl");    
+    cy.request("GET", dbFixturesUrl + "/drop-database?db=" + databaseName)
         .then(response => {
             expect(response.status).to.eql(200);
         });
 });
 
 Cypress.Commands.add('dropCollection', (databaseName, collectionName) => {
-    cy.request("GET", baseUrl + "/drop-collection?db=" + databaseName + "&col=" + collectionName)
+    const dbFixturesUrl = Cypress.config("dbFixturesUrl");    
+    cy.request("GET", dbFixturesUrl + "/drop-collection?db=" + databaseName + "&col=" + collectionName)
         .then(response => {
             expect(response.status).to.eql(200);
         });
 });
 
 Cypress.Commands.add('getCollection', (databaseName, collectionName) => {
-    cy.request("GET", baseUrl + "/get-collection?db=" + databaseName + "&col=" + collectionName)
+    const dbFixturesUrl = Cypress.config("dbFixturesUrl");    
+    cy.request("GET", dbFixturesUrl + "/get-collection?db=" + databaseName + "&col=" + collectionName)
         .then(response => {
             expect(response.status).to.eql(200);
             return response.body;
