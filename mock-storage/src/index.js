@@ -1,4 +1,5 @@
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 
 const app = express();
@@ -24,7 +25,7 @@ app.post("/upload", (req, res) => {
     const videoId = req.headers.id;
     const localFilePath = path.join(storagePath, videoId);
     const fileWriteStream = fs.createWriteStream(localFilePath);
-    stream.pipe(fileWriteStream)
+    req.pipe(fileWriteStream)
         .on("error", err => {
             console.error("Upload failed.");
             console.error(err && err.stack || err);

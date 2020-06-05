@@ -152,6 +152,7 @@ services:
     volumes:
       - /tmp/mock-storage/npm-cache:/root/.npm:z
       - ./mock-storage/src:/usr/src/app/src:z
+      - ./mock-storage/storage:/usr/src/app/storage:z
     ports:
      - "4005:80"
     environment:

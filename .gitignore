@@ -18,3 +18,4 @@ cypress/videos/
 cypress/integration/examples/
 cypress/fixtures/example.json
 *.bak
+mock-storage/storage/
