@@ -1,11 +1,13 @@
 {
-  "name": "history",
+  "name": "metadata",
   "version": "1.0.0",
   "description": "",
   "main": "./src/index.js",
   "scripts": {
     "start": "node ./src/index.js",
-    "start:dev": "nodemon --legacy-watch ./src/index.js"
+    "start:dev": "nodemon --legacy-watch ./src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watchAll"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +19,7 @@
     "wait-port": "^0.2.6"
   },
   "devDependencies": {
-    "nodemon": "^1.19.1"
+    "nodemon": "^1.19.1",
+    "jest": "^25.4.0"
   }
 }

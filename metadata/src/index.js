@@ -3,66 +3,58 @@ const mongodb = require("mongodb");
 const amqp = require('amqplib');
 const bodyParser = require("body-parser");
 
-if (!process.env.DBHOST) {
-    throw new Error("Please specify the databse host using environment variable DBHOST.");
-}
-
-if (!process.env.DBNAME) {
-    throw new Error("Please specify the name of the database using environment variable DBNAME");
-}
-
-if (!process.env.RABBIT) {
-    throw new Error("Please specify the name of the RabbitMQ host using environment variable RABBIT");
-}
-
-const DBHOST = process.env.DBHOST;
-const DBNAME = process.env.DBNAME;
-const RABBIT = process.env.RABBIT;
-
 //
 // Connect to the database.
 //
-function connectDb() {
-    return mongodb.MongoClient.connect(DBHOST) 
+function connectDb(dbHost, dbName) {
+    return mongodb.MongoClient.connect(dbHost, { useUnifiedTopology: true }) 
         .then(client => {
-            return client.db(DBNAME);
+            const db = client.db(dbName);
+            return {                // Return an object that represents the database connection.
+                db: db,             // To access the database...
+                close: () => {      // and later close the connection to it.
+                    return client.close();
+                },
+            };
         });
 }
 
 //
 // Connect to the RabbitMQ server.
 //
-function connectRabbit() {
+function connectRabbit(rabbitHost) {
 
-    console.log(`Connecting to RabbitMQ server at ${RABBIT}.`);
+    // console.log(`Connecting to RabbitMQ server at ${rabbitHost}.`);
 
-    return amqp.connect(RABBIT) // Connect to the RabbitMQ server.
+    return amqp.connect(rabbitHost) // Connect to the RabbitMQ server.
         .then(messagingConnection => {
-            console.log("Connected to RabbitMQ.");
+            // console.log("Connected to RabbitMQ.");
 
             return messagingConnection.createChannel(); // Create a RabbitMQ messaging channel.
         });
 }
 
 //
-// Setup event handlers.
+// Define your HTTP route handlers here.
 //
-function setupHandlers(app, db, messageChannel) {
+function setupHandlers(microservice) {
 
-    const videosCollection = db.collection("videos");
+    const videosCollection = microservice.db.collection("videos");
 
     //
     // HTTP GET API to retrieve list of videos from the database.
     //
-    app.get("/videos", (req, res) => {
-        videosCollection.find() // Retreive video list from database.
+    microservice.app.get("/videos", (req, res) => {
+        return videosCollection.find() // Returns a promise so we can await the result in the test.
             .toArray() // In a real application this should be paginated.
             .then(videos => {
-                res.json({ videos });
+                res.json({
+                    videos: videos
+                });
             })
             .catch(err => {
-                console.error("Failed to get videos collection.");
-                console.error(err);
+                console.error("Failed to get videos collection from database!");
+                console.error(err && err.stack || err);
                 res.sendStatus(500);
             });
     });
@@ -70,9 +62,9 @@ function setupHandlers(app, db, messageChannel) {
     //
     // HTTP GET API to retreive details for a particular video.
     //
-    app.get("/video", (req, res) => {
+    microservice.app.get("/video", (req, res) => {
         const videoId = new mongodb.ObjectID(req.query.id);
-        videosCollection.findOne({ _id: videoId }) // Retreive details of video from database.
+        return videosCollection.findOne({ _id: videoId }) // Returns a promise so we can await the result in the test.
             .then(video => {
                 if (!video) {
                     res.sendStatus(404); // Video with the requested ID doesn't exist!
@@ -88,7 +80,10 @@ function setupHandlers(app, db, messageChannel) {
             });
     });
     
-    function consumeVideoUploadedMessage(msg) { // Handler for coming messages.
+	//
+	// Handler forcoming RabbitMQ messages.
+	//
+    function consumeVideoUploadedMessage(msg) { 
         console.log("Received a 'viewed-uploaded' message");
 
         const parsedMsg = JSON.parse(msg.content.toString()); // Parse the JSON message.
@@ -101,56 +96,111 @@ function setupHandlers(app, db, messageChannel) {
         return videosCollection.insertOne(videoMetadata) // Record the metadata for the video.
             .then(() => {
                 console.log("Acknowledging message was handled.");                
-                messageChannel.ack(msg); // If there is no error, acknowledge the message.
+                microservice.messageChannel.ack(msg); // If there is no error, acknowledge the message.
             });
     };
 
-    return messageChannel.assertExchange("video-uploaded", "fanout") // Assert that we have a "video-uploaded" exchange.
+	// Add other handlers here.
+
+    return microservice.messageChannel.assertExchange("video-uploaded", "fanout") // Assert that we have a "video-uploaded" exchange.
         .then(() => {
-            return messageChannel.assertQueue("", {}); // Create an anonyous queue.
+            return microservice.messageChannel.assertQueue("", {}); // Create an anonyous queue.
         })
         .then(response => {
             const queueName = response.queue;
-            console.log(`Created queue ${queueName}, binding it to "video-uploaded" exchange.`);
-            return messageChannel.bindQueue(queueName, "video-uploaded", "") // Bind the queue to the exchange.
+            // console.log(`Created queue ${queueName}, binding it to "video-uploaded" exchange.`);
+            return microservice.messageChannel.bindQueue(queueName, "video-uploaded", "") // Bind the queue to the exchange.
                 .then(() => {
-                    return messageChannel.consume(queueName, consumeVideoUploadedMessage); // Start receiving messages from the anonymous queue.
+                    return microservice.messageChannel.consume(queueName, consumeVideoUploadedMessage); // Start receiving messages from the anonymous queue.
                 });
         });
 }
 
 //
-// Start the HTTP server.
+// Starts the Express HTTP server.
 //
-function startHttpServer(db, messageChannel) {
+function startHttpServer(dbConn, messageChannel) {
     return new Promise(resolve => { // Wrap in a promise so we can be notified when the server has started.
         const app = express();
-        app.use(bodyParser.json()); // Enable JSON body for HTTP requests.
-        setupHandlers(app, db, messageChannel);
+        const microservice = { // Create an object to represent our microservice.
+            app: app,
+            db: dbConn.db,
+			messageChannel: messageChannel,
+        };
+		app.use(bodyParser.json()); // Enable JSON body for HTTP requests.
+        setupHandlers(microservice);
 
         const port = process.env.PORT && parseInt(process.env.PORT) || 3000;
-        app.listen(port, () => {
-            resolve(); // HTTP server is listening, resolve the promise.
+        const server = app.listen(port, () => {
+            microservice.close = () => { // Create a function that can be used to close our server and database.
+                return new Promise(resolve => {
+                    server.close(() => { // Close the Express server.
+            resolve();
+        });
+                })
+                .then(() => {
+                    return dbConn.close(); // Close the database.
+                });
+            };
+            resolve(microservice);
         });
     });
+}
+
+//
+// Collect code here that executes when the microservice starts.
+//
+function startMicroservice(dbHost, dbName, rabbitHost) {
+    return connectDb(dbHost, dbName)        	// Connect to the database...
+        .then(dbConn => {                   	// then...
+			return connectRabbit(rabbitHost)    // connect to RabbitMQ...
+				.then(messageChannel => {		// then...
+            		return startHttpServer(		// start the HTTP server.
+						dbConn, 
+						messageChannel
+					);	
+				});
+        });
 }
 
 //
 // Application entry point.
 //
 function main() {
-    return connectDb()                                          // Connect to the database...
-        .then(db => {                                           // then...
-            return connectRabbit()                              // connect to RabbitMQ...
-                .then(messageChannel => {                       // then...
-                    return startHttpServer(db, messageChannel); // start the HTTP server.
-                });
-        });
+    if (!process.env.DBHOST) {
+        throw new Error("Please specify the databse host using environment variable DBHOST.");
+    }
+    
+    const DBHOST = process.env.DBHOST;
+
+    if (!process.env.DBNAME) {
+        throw new Error("Please specify the databse name using environment variable DBNAME.");
+    }
+    
+    const DBNAME = process.env.DBNAME;
+        
+	if (!process.env.RABBIT) {
+	    throw new Error("Please specify the name of the RabbitMQ host using environment variable RABBIT");
+	}
+	
+	const RABBIT = process.env.RABBIT;
+
+    return startMicroservice(DBHOST, DBNAME, RABBIT);
 }
 
-main()
-    .then(() => console.log("Microservice online."))
-    .catch(err => {
-        console.error("Microservice failed to start.");
-        console.error(err && err.stack || err);
-    });
+if (require.main === module) {
+    // Only start the microservice normally if this script is the "main" module.
+	main()
+	    .then(() => console.log("Microservice online."))
+	    .catch(err => {
+	        console.error("Microservice failed to start.");
+	        console.error(err && err.stack || err);
+	    });
+}
+else {
+    // Otherwise we are running under test
+    module.exports = {
+        startMicroservice,
+    };
+}
+
