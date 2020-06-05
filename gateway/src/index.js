@@ -1,39 +1,11 @@
 const express = require("express");
-const amqp = require("amqplib");
 const path = require("path");
 const request = require("request");
-
-if (!process.env.RABBIT) {
-    throw new Error("Please specify the name of the RabbitMQ host using environment variable RABBIT");
-}
-
-const RABBIT = process.env.RABBIT;
-
-//
-// Connect to the RabbitMQ server.
-//
-function connectRabbit() {
-
-    console.log(`Connecting to RabbitMQ server at ${RABBIT}.`);
-
-    return amqp.connect(RABBIT) // Connect to the RabbitMQ server.
-        .then(connection => {
-            console.log("Connected to RabbitMQ.");
-
-            return connection.createChannel() // Create a RabbitMQ messaging channel.
-                .then(messageChannel => {
-                    return messageChannel.assertExchange("viewed", "fanout") // Assert that we have a "viewed" exchange.
-                        .then(() => {
-                            return messageChannel;
-                        });
-                });
-        });
-}
 
 //
 // Setup event handlers.
 //
-function setupHandlers(app, messageChannel) {
+function setupHandlers(app) {
     app.set("views", path.join(__dirname, "views")); // Set directory that contains templates for views.
     app.set("view engine", "hbs"); // Use hbs as the view engine for Express.
     
@@ -130,10 +102,10 @@ function setupHandlers(app, messageChannel) {
 //
 // Start the HTTP server.
 //
-function startHttpServer(messageChannel) {
+function startHttpServer() {
     return new Promise(resolve => { // Wrap in a promise so we can be notified when the server has started.
         const app = express();
-        setupHandlers(app, messageChannel);
+        setupHandlers(app);
 
         const port = process.env.PORT && parseInt(process.env.PORT) || 3000;
         app.listen(port, () => {
@@ -146,10 +118,7 @@ function startHttpServer(messageChannel) {
 // Application entry point.
 //
 function main() {
-    return connectRabbit()                          // Connect to RabbitMQ...
-        .then(messageChannel => {                   // then...
-            return startHttpServer(messageChannel); // start the HTTP server.
-        });
+    return startHttpServer(); // Start the HTTP server.
 }
 
 main()

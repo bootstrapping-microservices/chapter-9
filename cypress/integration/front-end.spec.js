@@ -1,10 +1,10 @@
 
-describe("front end", () => {
+describe("flixtube front end", () => {
 
     it("can list videos", () => {
 
-        // Load the fixture named "two-videos" into the database "videos".
-        cy.loadFixture("videos", "two-videos");
+        // Load the fixture named "two-videos" into the database "metadata".
+        cy.loadFixture("metadata", "two-videos");
         
         // Visit the web page.
         cy.visit("/");
