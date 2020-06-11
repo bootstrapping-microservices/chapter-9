@@ -74,32 +74,6 @@ services:
     environment:
       - PORT=80
       - RABBIT=amqp://guest:guest@rabbit:5672
-      - DBHOST=mongodb://db:27017
-      - DBNAME=videos
-      - NODE_ENV=development
-      - VIDEO_STORAGE_HOST=video-storage
-      - VIDEO_STORAGE_PORT=3000
-    depends_on:
-      - db
-      - rabbit
-    restart: "no"
-
-  history:
-    image: history
-    build: 
-      context: ./history
-      dockerfile: Dockerfile-dev
-    container_name: history
-    volumes:
-      - /tmp/history/npm-cache:/root/.npm:z
-      - ./history/src:/usr/src/app/src:z
-    ports:
-     - "4002:80"
-    environment:
-      - PORT=80
-      - RABBIT=amqp://guest:guest@rabbit:5672
-      - DBHOST=mongodb://db:27017
-      - DBNAME=history
       - NODE_ENV=development
     depends_on:
       - db
@@ -123,6 +97,28 @@ services:
       - RABBIT=amqp://guest:guest@rabbit:5672
       - NODE_ENV=development
     depends_on:
+      - rabbit
+    restart: "no"
+
+  history:
+    image: history
+    build: 
+      context: ./history
+      dockerfile: Dockerfile-dev
+    container_name: history
+    volumes:
+      - /tmp/history/npm-cache:/root/.npm:z
+      - ./history/src:/usr/src/app/src:z
+    ports:
+     - "4002:80"
+    environment:
+      - PORT=80
+      - RABBIT=amqp://guest:guest@rabbit:5672
+      - DBHOST=mongodb://db:27017
+      - DBNAME=history
+      - NODE_ENV=development
+    depends_on:
+      - db
       - rabbit
     restart: "no"
 

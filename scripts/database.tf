@@ -39,7 +39,7 @@ resource "kubernetes_deployment" "database" {
 
 resource "kubernetes_service" "database" {
     metadata {
-        name = "database"
+        name = "db"
     }
 
     spec {

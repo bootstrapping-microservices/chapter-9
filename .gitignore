@@ -19,3 +19,5 @@ cypress/integration/examples/
 cypress/fixtures/example.json
 *.bak
 mock-storage/storage/
+scripts/terraform.tfstate
+scripts/terraform.tfstate.backup

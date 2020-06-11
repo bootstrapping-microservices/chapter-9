@@ -1,9 +1,29 @@
+variable "app_version" {}
+variable "service_name" {}
+
+variable "dns_name" {
+    default = ""
+}
+
+variable "login_server" {}
+variable "username" {}
+variable "password" {}
+
+variable "service_type" {
+    default = "ClusterIP"
+}
+
+variable "session_affinity" {
+    default = ""
+}
+
+variable "env" {
+    default = {}
+    type = map(string)
+}
+
 locals {
-    service_name = "video-streaming"
-    login_server = azurerm_container_registry.container_registry.login_server
-    username = azurerm_container_registry.container_registry.admin_username
-    password = azurerm_container_registry.container_registry.admin_password
-    image_tag = "${local.login_server}/${local.service_name}:${var.app_version}"
+    image_tag = "${var.login_server}/${var.service_name}:${var.app_version}"
 }
 
 resource "null_resource" "docker_build" {
@@ -13,7 +33,7 @@ resource "null_resource" "docker_build" {
     }
 
     provisioner "local-exec" {
-        command = "docker build -t ${local.image_tag} --file ../${local.service_name}/Dockerfile-prod ../${local.service_name}"
+        command = "docker build -t ${local.image_tag} --file ../${var.service_name}/Dockerfile-prod ../${var.service_name}"
     }
 }
 
@@ -26,7 +46,7 @@ resource "null_resource" "docker_login" {
     }
 
     provisioner "local-exec" {
-        command = "docker login ${local.login_server} --username ${local.username} --password ${local.password}"
+        command = "docker login ${var.login_server} --username ${var.username} --password ${var.password}"
     }
 }
 
@@ -46,8 +66,8 @@ resource "null_resource" "docker_push" {
 locals {
     dockercreds = {
         auths = {
-            "${local.login_server}" = {
-                auth = base64encode("${local.username}:${local.password}")
+            "${var.login_server}" = {
+                auth = base64encode("${var.username}:${var.password}")
             }
         }
     }
@@ -55,7 +75,7 @@ locals {
 
 resource "kubernetes_secret" "docker_credentials" {
     metadata {
-        name = "docker-credentials"
+        name = "${var.service_name}-docker-credentials"
     }
 
     data = {
@@ -70,10 +90,10 @@ resource "kubernetes_deployment" "service_deployment" {
     depends_on = [ null_resource.docker_push ]
 
     metadata {
-        name = local.service_name
+        name = var.service_name
 
     labels = {
-            pod = local.service_name
+            pod = var.service_name
         }
     }
 
@@ -82,27 +102,35 @@ resource "kubernetes_deployment" "service_deployment" {
 
         selector {
             match_labels = {
-                pod = local.service_name
+                pod = var.service_name
             }
         }
 
         template {
             metadata {
                 labels = {
-                    pod = local.service_name
+                    pod = var.service_name
                 }
             }
 
             spec {
                 container {
                     image = local.image_tag
-                    name  = local.service_name
+                    name  = var.service_name
 
                     env {
                         name = "PORT"
                         value = "80"
                     }
-                }
+
+                    dynamic "env" {
+                        for_each = var.env
+                        content {
+                          name = env.key
+                          value = env.value
+                        }
+                    }
+               }
 
                 image_pull_secrets {
                     name = kubernetes_secret.docker_credentials.metadata[0].name
@@ -114,7 +142,7 @@ resource "kubernetes_deployment" "service_deployment" {
 
 resource "kubernetes_service" "service" {
     metadata {
-        name = local.service_name
+        name = var.dns_name != "" ? var.dns_name : var.service_name
     }
 
     spec {
@@ -122,13 +150,13 @@ resource "kubernetes_service" "service" {
             pod = kubernetes_deployment.service_deployment.metadata[0].labels.pod
         }   
 
-        session_affinity = "ClientIP"
+        session_affinity = var.session_affinity
 
         port {
             port        = 80
             target_port = 80
         }
 
-        type             = "LoadBalancer"
+        type             = var.service_type
     }
 }
