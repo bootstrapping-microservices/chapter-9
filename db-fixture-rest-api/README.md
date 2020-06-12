@@ -1,5 +1,7 @@
 # db-fixture-rest-api
 
+You can find this project on GitHub at [https://github.com/ashleydavis/db-fixture-rest-api](https://github.com/ashleydavis/db-fixture-rest-api).
+
 A REST API for loading and unloading MongoDB database fixtures.
 
 **Don't run this on a production server, it is for testing only and provides unauthenticated access to your database!**
