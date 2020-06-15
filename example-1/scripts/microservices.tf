@@ -53,8 +53,8 @@ module "azure-storage-microservice" {
     password = local.password
     app_version = var.app_version
     env = {
-        STORAGE_ACCOUNT_NAME = "bootstrapmicroservice"
-        STORAGE_ACCESS_KEY = "KJgXtq1IfIaIRuDa23iX0MOGflQkkbg+Md3dgQrgUQ3ZKPeo/Bd7M5GTJb1uv32llUgPj/z6chMHaAO3Hg+DUQ=="
+        STORAGE_ACCOUNT_NAME = var.storage_account_name
+        STORAGE_ACCESS_KEY = var.storage_access_key
     }
 }
 
