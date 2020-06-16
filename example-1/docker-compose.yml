@@ -135,8 +135,8 @@ services:
   #    - "4005:80"
   #   environment:
   #     - PORT=80
-  #     - STORAGE_ACCOUNT_NAME=bootstrapmicroservice
-  #     - STORAGE_ACCESS_KEY=EAjM1FvpfEG1kR8H+zkKJO/T1TjS++GYysJICJVS0f1UncMttRj0h8peq/5ciJWI+PwjkUyHL+cEv6ahtnsWWA==
+  #     - STORAGE_ACCOUNT_NAME=<your-storage-account>
+  #     - STORAGE_ACCESS_KEY=<your-access-key>
   #   restart: "no"
 
   video-storage:
