@@ -9,5 +9,5 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 27017, host: 5000  # For the MongoDB database.
   config.vm.network "forwarded_port", guest: 9000, host: 9000   # For DB fixtures REST API.
 
-  config.vm.provision "shell", path: "provision-dev-vm.sh"
+  config.vm.provision "shell", path: "./scripts/provision-dev-vm.sh"
 end
