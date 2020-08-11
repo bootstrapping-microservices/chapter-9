@@ -14,7 +14,6 @@
     "amqplib": "^0.5.5",
     "express": "^4.17.1",
     "mongodb": "^3.3.4",
-    "request": "^2.88.2",
     "wait-port": "^0.2.6"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 const express = require("express");
 const amqp = require('amqplib');
-const request = require("request");
+const http = require("http");
 
 if (!process.env.RABBIT) {
     throw new Error("Please specify the name of the RabbitMQ host using environment variable RABBIT");
@@ -47,7 +47,20 @@ function setupHandlers(app, messageChannel) {
     app.get("/video", (req, res) => { // Route for streaming video.
         const videoId = req.query.id;
 
-        request.get(`http://video-storage/video?id=${videoId}`).pipe(res); 
+        const forwardRequest = http.request( // Forward the request to the video storage microservice.
+            {
+                host: `video-storage`,
+                path: `/video?id=${videoId}`,
+                method: 'GET',
+                headers: req.headers,
+            }, 
+            forwardResponse => {
+                res.writeHeader(forwardResponse.statusCode, forwardResponse.headers);
+                forwardResponse.pipe(res);
+            }
+        );
+        
+        req.pipe(forwardRequest);
 
         broadcastViewedMessage(messageChannel, videoId); // Send "viewed" message to indicate this video has been watched.
     });

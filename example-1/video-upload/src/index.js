@@ -1,8 +1,7 @@
 const express = require("express");
 const mongodb = require("mongodb");
 const amqp = require('amqplib');
-const fs = require("fs");
-const request = require("request");
+ const http = require("http");
 
 if (!process.env.RABBIT) {
     throw new Error("Please specify the name of the RabbitMQ host using environment variable RABBIT");
@@ -13,10 +12,19 @@ const RABBIT = process.env.RABBIT;
 //
 //  Write a Node.js stream to a HTTP POST request.
 //
-function streamToHttpPost(inputStream, uploadUrl, headers) {
+function streamToHttpPost(inputStream, uploadHost, uploadRoute, headers) {
     return new Promise((resolve, reject) => { // Wrapthe stream in a promise so that we can wait for it to complete.
+        const forwardRequest = http.request( // Forward the request to the video storage microservice.
+            {
+                host: uploadHost,
+                path: uploadRoute,
+                method: 'POST',
+                headers: headers,
+            }
+        );
+        
         inputStream.on("error", reject);
-        inputStream.pipe(request.post(uploadUrl, { headers: headers }))
+        inputStream.pipe(forwardRequest)
             .on("error", reject)
             .on("end", resolve)
             .on("finish", resolve)
@@ -62,9 +70,8 @@ function setupHandlers(app, messageChannel) {
     app.post("/upload", (req, res) => {
         const fileName = req.headers["file-name"];
         const videoId = new mongodb.ObjectId(); // Create a new unique ID for the video.
-        const uploadUrl = `http://video-storage/upload`;
         const newHeaders = Object.assign({}, req.headers, { id: videoId });
-        streamToHttpPost(req, uploadUrl, newHeaders)
+        streamToHttpPost(req, `video-storage`, `/upload`, newHeaders)
             .then(() => {
                 res.sendStatus(200);
             })
