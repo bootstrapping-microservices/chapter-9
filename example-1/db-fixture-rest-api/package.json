@@ -25,7 +25,7 @@
   "dependencies": {
     "express": "^4.16.4",
     "globby": "^9.1.0",
-    "mongodb": "^3.1.10",
+    "mongodb": "^3.1.13",
     "node-mongodb-fixtures": "^2.2.1",
     "nodemon": "^1.18.9"
   },
