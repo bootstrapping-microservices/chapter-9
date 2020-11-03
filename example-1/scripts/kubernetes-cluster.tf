@@ -24,12 +24,6 @@ resource "azurerm_kubernetes_cluster" "cluster" {
         client_id     = var.client_id
         client_secret = var.client_secret
     }
-
-    addon_profile {
-        kube_dashboard {
-            enabled = true
-        }
-    }
 }
 
 output "cluster_client_key" {
