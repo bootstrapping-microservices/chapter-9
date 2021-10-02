@@ -7,3 +7,5 @@ The chapter 9 code repository contains the complete working example application:
 Chapter 9 of Bootstrapping Microservices is an overview of the FlixTube example application.
 
 Please read chapter 9 for instructions on how to boot and test FlixTube on your development workstation. Chapter 9 also shows how to create a Kubernetes cluster and then deploy FlixTube to it.
+
+[Click here to support my work](https://www.codecapers.com.au/about#support-my-work)
