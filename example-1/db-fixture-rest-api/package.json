@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A REST API for loading and unloading MongoDB database fixtures.",
   "scripts": {
-    "start": "nodemon --legacy-watch --watch \"fixtures/**/*\" ./src/index.js",
+    "start": "nodemon --legacy-watch --watch \"fixtures/**/*\" --watch ./src/index.js --delay 5 ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

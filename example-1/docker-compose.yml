@@ -36,6 +36,7 @@ services:
      - FIXTURES_DIR=fixtures
     volumes:
      - ./fixtures:/usr/src/app/fixtures:z
+     - ./db-fixture-rest-api/src:/usr/src/app/src:z
     depends_on:
       - db
     restart: always
