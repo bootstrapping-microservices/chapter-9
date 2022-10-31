@@ -1,7 +1,7 @@
 {
   "name": "chapter-9",
   "version": "1.0.0",
-  "description": "Code and examples for Chapter 9 of [Bootstrapping Microservices](http://bit.ly/2o0aDsP).",
+  "description": "Code and examples for Chapter 9 of [Bootstrapping Microservices](https://www.bootstrapping-microservices.com).",
   "scripts": {
     "test:watch": "cypress open",
     "test": "cypress run"
