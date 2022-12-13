@@ -12,7 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "amqplib": "^0.5.5",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "wait-port": "^0.2.6"
   },
   "devDependencies": {
